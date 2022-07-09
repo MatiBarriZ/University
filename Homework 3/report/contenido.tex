@@ -1,0 +1,305 @@
+\begin{multicols}{2}
+\section{Introducción}
+
+En Ciencias de la Computación es fundamental la elección de las estructuras de datos para almacenar la información que se requiera. Para esto, alguno de los criterios más importantes que se utilizan son el análisis de complejidad temporal y espacial.\\
+\indent En este informe se presenta una comparación de una implementación propia de árbol binario de búsqueda no balanceado, tabla hash abierta, tabla hash cerrada y dos estructuras de la STL, que son set junto a unordered set, la cual la primera está implementada con árboles rojo-negro y la segunda con tabla hash. Luego, para realizar esta comparación se utilizó un dataset de Twitter que contempla usuarios que siguen a una universidad chilena en esa red social, teniendo un tamaño de 29.245 filas por 7 columnas. Además, el dataset se extrajo mediante la API de Twitter. \\
+\indent Las herramientas que se utilizaron fueron el lenguaje C++ para la implementación y Python 3.9.5 para la visualización y análisis del dataset, donde la experimentación se realizó en un procesador Apple Silicon M1 de 8 núcleos y con 8 GB de RAM.\\
+En general, al usar una estructura de dato sobre otra se está privilegiando un criterio sobre otro, ya que existe un trade-off entre rendimiento para la inserción, búsqueda y eliminación y el espacio en memoria que utilizan. Por lo tanto, dependiendo de lo que se requiera es que podrá ser más útil una tabla hash sobre un árbol binario de búsqueda. De todas formas, es preferible que el árbol binario de búsqueda sea balanceado para que tenga mejores rendimientos, aunque no al nivel de una tabla hash, pero utilizando menos espacio que este. \\
+
+\section{Dataset y del ambiente de experimentación}
+Para realizar la comparación entre las distintas estructuras de datos, se consideró un dataset de Twitter, la cual consiste de 29.245 usuarios que son seguidores de la cuenta oficial de alguna universidad chilena en dicha red social. En la Tabla \ref{tab:dataset} se puede observar el formato del dataset en un extracto que se obtuvo de este, donde tiene 7 columnas que son: University, User ID, User Name, Number Tweets, Friends Count y Created At. En el análisis de las estructuras de datos se utilizará principalmente las tres primeras columnas, es decir, la columna de University, User ID y User Name.\\
+Se realizó un análisis previo del dataset, del cual se obtuvieron 3144 valores repetidos que fueron eliminados para evitar conflictos dentro de estructuras utilizadas dentro de la implementación, que se puede encontrar en Github REFERENCIA. Finalmente, quedaron 26101 filas en total con las columnas del dataset original.\\
+\indent La evaluación experimental se llevó a cabo en el lenguaje C++ con Apple clang 13.1.6., en el sistema operativo macOS 12.4 con una CPU Apple Silicon M1 de 8 núcleos con 4 núcleos de rendimiento y 4 de eficiencia junto a 8GB de memoria RAM unificada con tecnología LPDDR4X. Cabe destacar que cada uno de los núcleos de alto rendimiento incorpora una caché de instrucciones de 192 KB y una caché de datos de 128 KB. En los chips M1 la caché de nivel 2 compartida tiene una capacidad de 12 MB. Además, los núcleos de alta eficiencia incorpora una caché de instrucciones de 128 KB y una caché de datos de 64 KB. Por último, la caché de nivel 2 tiene una capacidad de 4 MB \cite{chipM1}.
+\end{multicols}
+\begin{table}[h!]
+\centering
+\scalebox{0.77}{
+\begin{tabular}{ccccccc}
+\hline
+\multicolumn{1}{|c|}{\textbf{University}} & \multicolumn{1}{c|}{\textbf{\begin{tabular}[c]{@{}c@{}}User \\ ID\end{tabular}}} & \multicolumn{1}{c|}{\textbf{\begin{tabular}[c]{@{}c@{}}User \\ Name\end{tabular}}} & \multicolumn{1}{c|}{\textbf{\begin{tabular}[c]{@{}c@{}}Number \\ Tweets\end{tabular}}} & \multicolumn{1}{c|}{\textbf{\begin{tabular}[c]{@{}c@{}}Friends \\ Count\end{tabular}}} & \multicolumn{1}{c|}{\textbf{\begin{tabular}[c]{@{}c@{}}Followers \\ Count\end{tabular}}} & \multicolumn{1}{c|}{\textbf{Created At}}                                                          \\ \hline
+\multicolumn{1}{|c|}{uvalpochile}         & \multicolumn{1}{c|}{890826871402835968}                                          & \multicolumn{1}{c|}{ElTiempoValpoCL}                                               & \multicolumn{1}{c|}{4369}                                                              & \multicolumn{1}{c|}{3525}                                                              & \multicolumn{1}{c|}{2095}                                                                & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}Fri Jul 28 \\ 06:50:51\\  +0000 2017\end{tabular}} \\ \hline
+\multicolumn{1}{|c|}{usantamaria}         & \multicolumn{1}{c|}{1330248178881490945}                                         & \multicolumn{1}{c|}{engelectrica}                                                  & \multicolumn{1}{c|}{4}                                                                 & \multicolumn{1}{c|}{206}                                                               & \multicolumn{1}{c|}{66}                                                                  & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}Sat Nov 21 \\ 20:34:26 \\ +0000 2020\end{tabular}} \\ \hline
+\multicolumn{1}{|c|}{usach}               & \multicolumn{1}{c|}{1384242600069136390}                                         & \multicolumn{1}{c|}{arquimed\_cl}                                                  & \multicolumn{1}{c|}{9}                                                                 & \multicolumn{1}{c|}{55}                                                                & \multicolumn{1}{c|}{4}                                                                   & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}Mon Apr 19 \\ 20:29:02 \\ +0000 2021\end{tabular}} \\ \hline
+\multicolumn{1}{|c|}{ubbchile}            & \multicolumn{1}{c|}{778265764914663424}                                          & \multicolumn{1}{c|}{\_PatrimonioUdeC}                                              & \multicolumn{1}{c|}{891}                                                               & \multicolumn{1}{c|}{1287}                                                              & \multicolumn{1}{c|}{783}                                                                 & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}Tue Sep 20 \\ 16:13:12 \\ +0000 2016\end{tabular}} \\ \hline
+\multicolumn{1}{|c|}{ucscconcepcion}      & \multicolumn{1}{c|}{232182273}                                                   & \multicolumn{1}{c|}{INFOCAP\_Chile}                                                & \multicolumn{1}{c|}{1432}                                                              & \multicolumn{1}{c|}{2399}                                                              & \multicolumn{1}{c|}{2644}                                                                & \multicolumn{1}{c|}{\begin{tabular}[c]{@{}c@{}}Thu Dec 30 \\ 13:16:14 \\ +0000 2010\end{tabular}} \\ \hline
+\multicolumn{1}{l}{}                      & \multicolumn{1}{l}{}                                                             & \multicolumn{1}{l}{}                                                               & \multicolumn{1}{l}{}                                                                   & \multicolumn{1}{l}{}                                                                   & \multicolumn{1}{l}{}                                                                     & \multicolumn{1}{l}{}                                                                              \\
+\multicolumn{1}{l}{}                      & \multicolumn{1}{l}{}                                                             & \multicolumn{1}{l}{}                                                               & \multicolumn{1}{l}{}                                                                   & \multicolumn{1}{l}{}                                                                   & \multicolumn{1}{l}{}                                                                     & \multicolumn{1}{l}{}                                                                             
+\end{tabular}}
+\vspace{-0.5cm}
+\caption{Formato dataset de Twitter utilizado.}
+\label{tab:dataset}
+\end{table}
+\begin{multicols}{2}
+
+
+\section{Estructuras de datos}
+
+\subsection{Tabla Hash}
+Una tabla hash es una estructura de datos que asocia llaves con valores, donde su rol principal es dispersar los elementos en el vector mediante su función hash. Además, el acceso a un elemento depende de la calidad de dicha función.
+Las tablas hash son $O(1)$ promedio y amortizado para insertar, buscar y eliminar. Es poco común que dos elementos estén en la mismo bucket si es que se elige una buena función hash y no tiene un factor de carga muy grande. Sin embargo, es de complejidad temporal $O(n)$ en el peor de los casos. Esto debido a dos razones \cite{ajaxhispano}:
+
+\begin{itemize}
+    \item Si varios elementos se insertan en la misma clave, entonces, por ejemplo, buscar dentro de esta clave será $O(n)$.
+    \item Una vez que la tabla hash ha superado su factor de carga $\alpha$, tiene que hacer rehash o resize del vector que está en su estructura subyacente (crear una nueva tabla más grande e insertar cada elemento a la nueva tabla).
+\end{itemize}
+
+Para el manejo de colisiones, se consideró el hashing abierto y el hashing cerrado. Para el hashing abierto se considera que, siendo $\alpha$ el factor de carga, la complejidad de buscar y de eliminar es $O(\alpha)$, mientras que el de inserción es de complejidad temporal $O(1)$. Para este caso, se consideró el factor de carga como $\alpha = 0.7$. Luego, el número de buckets se consideró como $1.3$ veces el tamaño de elementos que habrá inicialmente en la tabla hash (capacity). Por otra parte, para el manejo de colisiones en hashing cerrado, se consideró la función hash double hashing, la cual permite $\Theta(n^2)$ de secuencias de un universo de $\Theta(n!)$ secuencias. Se define como:
+\begin{equation*}
+    h(k,i) = (h_1(k) + i*h_2(k))\%n \ \ \ , \ i=\{0,1,...,n-1\}
+\end{equation*}
+donde $h_1(k) = k\% \text{capacity}$ y $h_2(k) =\text{capacity} * k * \frac{\sqrt{5} - 1}{2}$ \cite{doublehashing}. 
+\subsection{Árbol Binario de Búsqueda}
+Es una estructura de dato basada en árboles, es decir, que contiene una raíz, nodos internos y hojas. Además, esta cumple que todo subárbol tiene una invariante: el nodo hijo izquierdo es menor que el padre y el nodo hijo derecho es mayor que este. Una característica de un árbol es su altura $h$, que es la distancia más larga entre la raíz y una hoja. Para buscar y eliminar es de complejidad $O(h)$, donde el peor caso sería $O(n)$ (árbol como una lista) y el mejor caso es $O(logn)$ \cite{AnswaCode}.
+\subsection{STL Set y Unordered Set}
+
+La estructura de dato std::set está implementada con árbol rojo-negro, la cual es un tipo de árbol binario de búsqueda balanceado (self balancing BST). Por lo tanto, su complejidad temporal de buscar es $O(log n)$, mientras que eliminar e insertar es de $O(logn + Rebalance)$ \cite{cpprefence_set}. La característica de esta estructura es que los elementos están en orden creciente por defecto. Por otra parte, std::unordered set no considera un orden y está implementada mediante una tabla hash. Así, su complejidad temporal para la búsqueda es $O(1)$ en el caso promedio y $O(n)$ en el peor de los casos. Esta complejidad también corresponde a la inserción y eliminación de un elemento \cite{cpprefence_unset}.
+
+\section{Resultados experimentales}
+Para obtener resultados robustos, se consideró el promedio de 30 réplicas para cada estructura de dato analizada. Además, para la inserción y búsqueda se consideraron 25 tamaños, donde para la inserción se consideraron esos valores al azar mediante una distribución uniforme realizada en Python 3.9.5. Dichos valores se pueden observar en la Tabla \ref{tab:insercion_user_id_all} y en la Tabla \ref{tab:insercion_user_name_all} del Anexo. De aquí, se obtuvieron los gráficos correspondientes a la inserción de los elementos en las estructuras de datos en estudio.
+\subsection{Resultados de la Inserción}
+En el Gráfico \ref{fig:inserciones_user_id} se pudo observar que a distintos tamaños de inserción con USER ID, las estructuras set, unordered set y tabla hash abierta, obtuvieron un rendimiento prácticamente constante con respecto a la tabla hash cerrada y el árbol binario de búsqueda no balanceado. Además, la tabla hash cerrada tuvo peor rendimiento con respecto al árbol binario de búsqueda, donde se podría considerar que se debe por el rehash que hace la tabla en el peor de los casos.
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.53\textwidth]{results/inserciones_user_id.svg}
+    \caption{Gráfico de inserciones con USER ID.}
+    \label{fig:inserciones_user_id}
+\end{figure}
+
+Con respecto a las estructuras de la STL, se pudo observar que el de mejor rendimiento fue set antes de unordered set, es decir, tuvo mejor rendimiento el árbol rojo-negro antes que la tabla hash. Esto no varió con respecto a la tabla hash cerrada, ya que al observar el Gráfico \ref{fig:inserciones_user_id_sin_BST_CHT} se notó que entre estas tres estructuras fue la de peor rendimiento para la inserción con USER ID. Cabe destacar que el rendimiento, en microsegundos, de unordered set fue prácticamente el doble de set y el rendimiento de la tabla hash cerrada fue seis veces peor que la de set.
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.53\textwidth]{results/inserciones_user_id_sin_BST_CHT.svg}
+    \caption{Gráfico de inserciones con USER ID sin BST y CHT.}
+    \label{fig:inserciones_user_id_sin_BST_CHT}
+\end{figure}
+En el Gráfico \ref{fig:inserciones_user_name} se pudo observar que, para la clave USER NAME, el peor rendimiento lo tuvo el árbol binario de búsqueda. En ese sentido, las demás estructuras muestran un rendimiento constante con respecto al árbol binario de búsqueda. Es por esto que fue necesario analizar cómo se comportan estas cuatro estructuras entre sí.\\ Así, en el Gráfico \ref{fig:inserciones_user_name_sin_BST}, se notó que prácticamente se mantienen constante tanto set, unordered set y la tabla hash abierta. No así la tabla hash cerrada que mostró un peor rendimiento que estas tres estructuras. Sin embargo, se observó que las de mejor rendimiento fueron las estructuras de datos provenientes de la Standard Library Template, después de la tabla hash abierta que tuvo un rendimiento peor, pero no tan drástico como la tabla hash cerrada, con respecto a unordered set y set. Por último, cabe mencionar que dentro de las estructuras de la STL, la de mejor rendimiento fue set.
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.53\textwidth]{results/inserciones_user_name.svg}
+    \caption{Gráfico de inserciones con USER NAME.}
+    \label{fig:inserciones_user_name}
+\end{figure}
+
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.53\textwidth]{results/inserciones_user_name_sin_BST.svg}
+    \caption{Gráfico de inserciones con USER NAME sin BST.}
+    \label{fig:inserciones_user_name_sin_BST}
+\end{figure}
+
+\subsection{Resultados de la Búsqueda}
+Para realizar la búsqueda de valores, se realizó de manera aleatoria para evitar sesgos con respecto a la elección de estos. Tras realizar las 30 réplicas para valores existentes para USER ID y USER NAME como también para valores no existentes con USER ID y USER NAME, se realizaron gráficos para su interpretación.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.53\textwidth]{results/valores_existentes_con_user_id.svg}
+    \caption{Gráfico de valores existentes con USER ID.}
+    \label{fig:valores_existentes_con_user_id}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.53\textwidth]{results/valores_existentes_con_user_id_sin_OHT.svg}
+    \caption{Gráfico de valores existentes con USER ID sin OHT.}
+    \label{fig:valores_existentes_con_user_id_sin_OHT}
+\end{figure}
+El Gráfico \ref{fig:valores_existentes_con_user_id} es con respecto a valores existentes que están en las estructuras, es decir, que se les aplicó una inserción. De este gráfico se pudo observar que prácticamente todas, excepto la tabla hash abierta están al rededor de una constante. No así la tabla hash abierta que a pesar de también obtener un rendimiento constante, sólo que una constante más grande que las demás en aproximadamente cuatro veces más que el rendimiento de las otras estructuras. Esto pudiese ocurrir debido a colisiones que generan listas extensas en algún índice del vector.\\
+Tras esto, el análisis recayó en considerar las cuatro estructuras restantes, obteniendo así el Gráfico \ref{fig:valores_existentes_con_user_id_sin_OHT} del cual se pudo observar que las de mejor rendimiento fueron la tabla hash cerrada y el unordered set, mientras que la de peor rendimiento fueron el árbol binario de búsqueda no balanceado y la estructura de datos de la STL, set.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.53\textwidth]{results/valores_no_existentes_con_user_id.svg}
+    \caption{Gráfico de valores no existentes con USER ID.}
+    \label{fig:valores_no_existentes_con_user_id}
+\end{figure}
+
+Para valores no existentes se obtuvo el Gráfico \ref{fig:valores_no_existentes_con_user_id}, la cual mostró que tanto el árbol binario de búsqueda como la tabla hash abierta obtuvieron rendimientos similares, con una tendencia a ser constante en ambos casos. Sin embargo, las de mejor rendimiento fueron las estructuras provenientes de la STL junto a la tabla hash cerrada de implementación propia.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.53\textwidth]{results/valores_no_existentes_con_user_id_sin_OHT_BST.svg}
+    \caption{Gráfico de valores no existentes con USER ID sin OHT y BST.}
+    \label{fig:valores_no_existentes_con_user_id_sin_OHT_BST}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.53\textwidth]{results/valores_pequenos_no_existentes_con_user_id.svg}
+    \caption{Gráfico de valores pequeños no existentes con USER ID.}
+    \label{fig:valores_pequeños_no_existentes_con_user_id}
+\end{figure}
+
+Analizando unordered set, set y la tabla hash cerrada se obtuvo el Gráfico \ref{fig:valores_no_existentes_con_user_id_sin_OHT_BST}, la cual señala que la tabla hash cerrada tuvo peor rendimiento versus las estructuras de la STL. Esto se pudo ver en la curva de color verde claro representada por la tabla hash cerrada, donde se pudo notar que ambas estructuras de la STL tuvieron un rendimiento similar, pero levemente mejor la estructura unordered set antes que set.\\
+En el Gráfico \ref{fig:valores_pequeños_no_existentes_con_user_id}, se notó que para valores pequeños no existentes la estructura de peor rendimiento fue la tabla hash abierta, luego fue el árbol binario de búsqueda y por último se pudo ver que, con respecto a estas dos, las demás también se comportaron constante, pero con una constante menor que las mencionadas anteriormente.
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.53\textwidth]{results/valores_pequenos_no_existentes_con_user_id_sin_OHT_BST.svg}
+    \caption{Gráfico de valores pequeños no existentes con USER ID sin OHT y BST.}
+    \label{fig:valores_pequeños_no_existentes_con_user_id_sin_OHT_BST}
+\end{figure}
+
+En el Gráfico \ref{fig:valores_pequeños_no_existentes_con_user_id_sin_OHT_BST}, se excluyó al árbol binario de búsqueda no balanceado y la tabla hash abierta. De este gráfico se pudo ver que las de mejor rendimiento fueron unordered set y set. En este sentido, la tabla hash cerrada tuvo un rendimiento más bajo que estas dos estructuras, pero todas con tendencia a ser una constante. Siendo esa constante de una diferencia entre 1.5 a 2 veces con respecto a las de la STL.
+
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.48\textwidth]{results/valores_existentes_con_user_name.svg}
+    \caption{Gráfico de valores existentes con USER NAME.}
+    \label{fig:valores_existentes_con_user_name}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.48\textwidth]{results/valores_existentes_con_user_name_sin_OHT_BST.svg}
+    \caption{Gráfico de valores existentes con USER NAME sin OHT y BST.}
+    \label{fig:valores_existentes_con_user_name_sin_OHT_BST}
+\end{figure}
+Con respecto a la búsqueda dada la clave USER NAME, del Gráfico \ref{fig:valores_existentes_con_user_name} se pudo observar que para valores existentes las de peor rendimiento fueron la tabla hash abierta y el árbol binario de búsqueda. Además, con respecto a estas, las otras estructuras muestran un comportamiento constate menor en una proporción entre 1.0 y 1.5 versus el árbol binario y de 1.5 a 2.0 con respecto a la tabla hash abierta.\\
+Ahora, comparando la tabla hash cerrada y ambas estructuras de la STL, del Gráfico \ref{fig:valores_existentes_con_user_name_sin_OHT_BST} se pudo extraer que la tabla hash cerrada es la que tiene peor rendimiento dentre de estas tres. Sigue siendo bastante mejor rendimiento que el árbol binario de búsqueda y de la tabla hash abierta. Sin embargo, este comportamiento no difirió con respecto a valores no existentes dada la clave USER NAME, ya que como se pudo observar en el Gráfico \ref{fig:valores_no_existentes_con_user_name} y en el Gráfico \ref{fig:valores_no_existentes_con_user_name_sin_BST_OHT}, el orden de rendimiento es similar al de los valores existentes.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.48\textwidth]{results/valores_no_existentes_con_user_name.svg}
+    \caption{Gráfico de valores no existentes con USER NAME.}
+    \label{fig:valores_no_existentes_con_user_name}
+\end{figure}
+ Para observar el comportamiento de la búsqueda de valores pequeños que no existen en las estructuras mediante la clave USER NAME se analizó el Gráfico \ref{fig:valores_pequeños_no_existentes_con_user_name}, donde se extrajo que la estructura de peor rendimiento fue la tabla hash abierta. Su rendimiento fue 1.5 a 2.0 veces peor que las demás estructuras que se encuentran prácticamente como una constante con respecto a esta.\\
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.48\textwidth]{results/valores_no_existentes_con_user_name_sin_BST_OHT.svg}
+    \caption{Gráfico de valores no existentes con USER NAME sin BST y OHT.}
+    \label{fig:valores_no_existentes_con_user_name_sin_BST_OHT}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.48\textwidth]{results/valores_pequenos_no_existentes_con_user_name.svg}
+    \caption{Gráfico de valores pequeños no existentes con USER NAME.}
+    \label{fig:valores_pequeños_no_existentes_con_user_name}
+\end{figure}
+Finalmente, para comparar el rendimiento de las demás estructuras, se realizó un segundo Gráfico \ref{fig:valores_pequeños_no_existentes_con_user_name_sin_OHT} sin considerar la tabla hash abierta. De este gráfico se pudo observar que el árbol binario de búsqueda tuvo mejor rendimiento que la tabla hash cerrada, pero peor rendimiento que las estructuras de la STL. Sin embargo, hubo tres puntos donde el árbol binario de búsqueda no balanceado se comportó peor que la tabla hash cerrada.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.48\textwidth]{results/valores_pequenos_no_existentes_con_user_name_sin_OHT.svg}
+    \caption{Gráfico de valores pequeños no existentes con USER NAME sin OHT.}
+    \label{fig:valores_pequeños_no_existentes_con_user_name_sin_OHT}
+\end{figure}
+
+\subsection{Resultados del tamaño de las ED.}
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.55\textwidth]{results/sizes_estructuras.svg}
+    \caption{Gráfico del tamaño de las estructuras de datos.}
+    \label{fig:sizes_estructuras}
+\end{figure}
+Con respecto al tamaño de las estructuras de datos, se calcularon mediante la función sizeof() junto a los términos correspondientes para cada estructura. Con esto se obtuvo la Tabla \ref{tab:sizes_estructuras} que se encuentra en el Anexo y de dicha tabla se pudo construir el Gráfico \ref{fig:sizes_estructuras}. De este gráfico se pudo analizar que las estructuras que más utilizaron espacio fueron las tablas hash de implementación propia, tanto abierta como cerrada. Sin embargo, entre estas dos la tabla hash cerrada ocupó más espacio que la tabla hash abierta. Además, se pudo observar que da igual el manejo de las colisiones y la clave considerada, el espacio utilizado será el mismo sea cual sea la tabla hash utilizada. Esto considerando sólo la implementación propia con parámetros similares.\\
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.55\textwidth]{results/sizes_estructuras_sin_HT.svg}
+    \caption{Gráfico del tamaño de las ED's sin contemplar OHT y CHT.}
+    \label{fig:sizes_estructuras_sin_HT}
+\end{figure}
+Luego, se consideró analizar las siguientes tres estructuras para observar su comportamiento. A partir de esta premisa, se obtuvo el Gráfico \ref{fig:sizes_estructuras_sin_HT}, donde se notó que el árbol binario de búsqueda no balanceado ocupó más espacio que las estructuras provenientes de la STL e incluso utilizó el mismo espacio para ambas claves USER ID y USER NAME. Sin embargo, este comportamiento no fue igual en la STL, ya que tanto set como unordered set utilizaron distinto almacenamiento en USER ID y en USER NAME siendo el primero mayor que el segundo en ambos casos. Cabe destacar que, nuevamente la tabla hash utilizó más espacio que un árbol, es decir, set utilizó menos espacio que unordered set.
+
+\section{Conclusión}
+Describir los principales descubrimientos obtenidos. Hacer hincapié en las estructuras de datos más rápidas para cada tipo de experimento y en la comparación de los dos tipos de claves evaluadas.\\
+Al considerar las evaluaciones experimentales de la inserción con ambas claves, se concluyó que para USER ID el mejor rendimiento lo obtuvo std::set y dentro de las propias implementaciones, la de mejor rendimiento fue la tabla hash abierta. Por otra parte, para la clave USER NAME la estructura de mejor rendimiento nuevamente fue std::set. Así, al menos para la inserción con ambas claves, se concluyó que tiene mejor rendimiento std::set sobre las demás. Cabe destacar que, considerando ambos casos, la de peor rendimiento fue el árbol binario de búsqueda no balanceado, ya que en USER ID se posicionó en la segunda estructura de peor rendimiento, mientras que en USER NAME en la primera posición. Además, cabe destacar que las de peor rendimiento para la inserción fueron la tabla hash cerrada y el árbol binario de búsqueda no balanceado. \\
+Con respecto a la evaluación experimental de búsqueda en los diversos escenarios, se concluyó que para USER ID la mejor estructura de dato fue std::unordered set, luego muy cercanamente std::set y dentro de las implementaciones propias, la de mejor rendimiento fue la tabla hash cerrada. Además, las de peor rendimiento fueron el árbol binario de búsqueda y la tabla hash abierta. Con respecto a la primera estructura, comparado con tabla hash, es comprensible que sea peor, ya que su complejidad es $O(h)$ versus una complejidad $O(1)$ amortizado en tabla hash. Sin embargo, probablemente la tabla hash abierta tuvo peor rendimiento por caer en su peor caso $O(n)$, es decir, que hubo demasiadas colisiones y esto generó que se crearan listas más largas por recorrer al momento de buscar.\\
+Con respecto a la evaluación experimental de búsqueda en los diversos escenarios, se concluyó que para USER NAME la mejor estructura de dato fue std::unordered set, luego std::set y dentro de las implementaciones propias, la de mejor rendimiento fue la tabla hash cerrada. Así, es importante considerar que la de peor rendimiento fue la tabla hash abierta y , en general, muy cerca la siguió el árbol binario de búsqueda no balanceado.\\
+Comparando la gran diferencia de rendimiento entre std::set y el árbol binario de búsqueda no balanceado, se pudo concluir que es fundamental que el árbol sea balanceado para tener mejores resultados. Esto significa que el costo de hacer el rebalance es menor que el de realizar búsquedas cuando no está balanceado.\\
+Con respecto al espacio utilizado por las estructuras, se pudo concluir que la tabla hash utiliza más espacio que un árbol, ya sea balanceado o no. Por lo tanto, si se requiere privilegiar el espacio, es de mejor consideración un árbol binario de búsqueda que una tabla hash, pero a pesar de esto, no es el único criterio que se debe considerar al momento de tomar una decisión con respecto a la estructura de dato a utilizar.\\
+Entonces, en general, si se requiere una inserción rápida, se concluyó que sería preferible una tabla hash abierta antes de una cerrada. Sin embargo, el trade-off está en que se pierde eficiencia al momento de realizar la búsqueda. Con esto, el trade-off también debe considerar el espacio, ya que la tabla hash cerrada utilizó bastante más espacio que la tabla hash abierta. Ahora, dentro de algo más equilibrado se podría considerar el red-black tree que se encuentra por "debajo" de std::set, ya que en general tuvo un buen rendimiento y no utilizó mucho espacio. Esta idea se pudo respaldar en base a que, a pesar de que sus complejidades son $O(h)$, es más estable que la tabla hash cuando se considera el peor de los casos para ambas estructuras.\\
+Otro problema en el que puede ver una pérdida de rendimiento en tablas hash grandes se debe al rendimiento de la caché. Las tablas Hash sufren de un mal rendimiento de caché, y por lo tanto para una colección grande, el tiempo de acceso podría tome más tiempo, ya que necesita recargar la parte relevante de la tabla de la memoria de nuevo en la caché. Además, el rendimiento de una tabla hash depende bastante de su función hash, ya que cuando se usa esta estructura, es importante usar una clave con una función hash realmente buena que sea rápida y que a menudo no genere valores duplicados para diferentes objetos. En ese sentido, algunas tablas hash como cucko hashing, tienen garantizada la búsqueda $O(1)$.
+
+\end{multicols}
+\section{Anexo}
+ 
+\begin{table}[H]
+\centering
+\begin{tabular}{cccccc} \hline
+\textbf{Insertados} & \textbf{BST $[\mu s]$} & \textbf{CHT $[\mu s]$} & \textbf{OHT $[\mu s]$} & \textbf{SET $[\mu s]$} & \textbf{USET $[\mu s]$} \\ \hline
+239                 & 526.667      & 14.9         & 0.966667     & 0.433333     & 0.5           \\
+752                 & 310.667      & 591.333      & 386.667      & 123.333      & 153.333       \\
+1240                & 77           & 132.2        & 886.667      & 236.667      & 373.333       \\
+1438                & 131.667      & 218.967      & 145.333      & 3.5          & 596.667       \\
+2301                & 233.867      & 367.967      & 23.4         & 5.1          & 10.1          \\
+3140                & 375.533      & 582.133      & 35.8         & 6.8          & 146.667       \\
+4909                & 601.733      & 1305.8       & 548.667      & 111.333      & 228.667       \\
+5782                & 868.533      & 2074.13      & 76.6         & 15.9         & 31.3          \\
+7860                & 1236.57      & 2976.17      & 105.7        & 229.667      & 475.333       \\
+8242                & 1620.17      & 3901.03      & 136.533      & 300.333      & 638.333       \\
+9215                & 2047.07      & 4887.83      & 171.267      & 37.6         & 801.667       \\
+11125               & 2569.5       & 6098.53      & 213.133      & 467.333      & 972.333       \\
+12555               & 3155.13      & 7408.23      & 260.8        & 565.333      & 114.367       \\
+13379               & 3780.3       & 8770         & 312.5        & 666.667      & 146.3         \\
+14065               & 4437.13      & 10185.5      & 366.867      & 77.2         & 178.233       \\
+15256               & 5158.6       & 11697        & 426.7        & 881.667      & 210.267       \\
+15351               & 5885.57      & 13216        & 487.1        & 99.2         & 242.3         \\
+16644               & 6686.57      & 14841.3      & 552.033      & 110.567      & 274.5         \\
+18643               & 7586.2       & 16624        & 625.667      & 124.6        & 307           \\
+19259               & 8519.53      & 18452.5      & 702.233      & 139.1        & 339.533       \\
+20588               & 9549.13      & 20392.1      & 783.5        & 156.067      & 372.3         \\
+21321               & 10629        & 22388.3      & 867.4        & 173.733      & 405.067       \\
+22358               & 11786.4      & 24460.4      & 954.667      & 191.767      & 438.567       \\
+23754               & 13037.7      & 26673.9      & 1046.6       & 210.9        & 472.433       \\
+25560               & 14423.4      & 29025.4      & 1145.07      & 231.767      & 506.733       \\ \hline
+\end{tabular}
+\caption{Resultados Inserción USER ID}
+\label{tab:insercion_user_id_all}
+\end{table}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{cccccc}\hline
+\textbf{Insertados} & \textbf{BST $[\mu s]$} & \textbf{CHT $[\mu s]$} & \textbf{OHT $[\mu s]$} & \textbf{SET $[\mu s]$} & \textbf{USET $[\mu s]$} \\ \hline
+239                 & 344.8        & 158.167      & 143.333      & 0.433333     & 0.5           \\
+752                 & 1544.07      & 625.4        & 5.6          & 123.333      & 153.333       \\
+1240                & 3701.8       & 1414.77      & 124.667      & 236.667      & 373.333       \\
+1438                & 6136.37      & 2336.1       & 20.2         & 3.5          & 596.667       \\
+2301                & 10343        & 3864.67      & 32.5         & 5.1          & 10.1          \\
+3140                & 16295.4      & 6013.83      & 491.667      & 6.8          & 146.667       \\
+4909                & 25691.6      & 10017.6      & 759.667      & 111.333      & 228.667       \\
+5782                & 36528.6      & 14593.4      & 107.4        & 15.9         & 31.3          \\
+7860                & 51485.7      & 20649.9      & 150.433      & 229.667      & 475.333       \\
+8242                & 67222.7      & 26980.1      & 196.2        & 300.333      & 638.333       \\
+9215                & 85318.6      & 33986.3      & 247.5        & 37.6         & 801.667       \\
+11125               & 108021       & 42498.5      & 310.367      & 467.333      & 972.333       \\
+12555               & 133194       & 51978.7      & 381.267      & 565.333      & 114.367       \\
+13379               & 159606       & 62060.2      & 456.6        & 666.667      & 146.3         \\
+14065               & 187500       & 72666.9      & 535.3        & 77.2         & 178.233       \\
+15256               & 217974       & 84177.3      & 620.267      & 881.667      & 210.267       \\
+15351               & 248754       & 95759.9      & 705.733      & 99.2         & 242.3         \\
+16644               & 282553       & 108336       & 798.133      & 110.567      & 274.5         \\
+18643               & 319884       & 122373       & 901.833      & 124.6        & 307           \\
+19259               & 358363       & 136843       & 1009.33      & 139.1        & 339.533       \\
+20588               & 399789       & 152320       & 1125.5       & 156.067      & 372.3         \\
+21321               & 442780       & 168330       & 1245.83      & 173.733      & 405.067       \\
+22358               & 487785       & 185107       & 1373.27      & 191.767      & 438.567       \\
+23754               & 535389       & 202934       & 1510.13      & 210.9        & 472.433       \\
+25560               & 586660       & 222087       & 1658.03      & 231.767      & 506.733       \\ \hline
+\end{tabular}
+\caption{Resultados Inserción USER NAME}
+\label{tab:insercion_user_name_all}
+\end{table}
+
+\begin{table}[ht]
+\begin{center}
+\begin{tabular}{ccc} %change to cc for 2 columns
+\hline
+\multicolumn{1}{c}{Estructura de Datos} & \multicolumn{1}{c}{USER ID [KB]} &
+\multicolumn{1}{c}{USER NAME [KB]}\\
+\hline
+BST  & 835.24  & 835.24    \\
+CHT  & 43481.1 & 43481.1   \\
+OHT  & 7078.62 & 7078.62   \\
+SET  & 208.832 & 156.768   \\
+USET & 457.048 & 252.584   \\
+\hline
+\end{tabular}
+\caption{Tamaño de las estructuras de datos utilizadas.}
+\label{tab:sizes_estructuras}
+\end{center}
+\end{table}
